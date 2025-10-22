@@ -1,0 +1,9 @@
+pandas
+scikit-learn
+numpy
+matplotlib
+skops
+black
+mlflow
+black==24.8.0
+isort==5.13.2

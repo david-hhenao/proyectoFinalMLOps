@@ -1,0 +1,36 @@
+# .github/workflows/ci.yml
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: 🐍 Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+      
+      - name: 📦 Instalar dependencias
+        run: make install
+      
+      - name: 🔍 Verificar formato de código
+        run: make format-check
+
+      - name: 🧪 Entrenar modelo
+        run: make train
+      
+      - name: 🧪 Ejecutar pruebas
+        run: make evaluate
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mlruns
+          path: mlruns
