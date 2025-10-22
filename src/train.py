@@ -14,7 +14,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 from sklearn.svm import SVC
 
-print(f"--- Debug: Initial CWD: {os.getcwd()} ---") # Indicar y crear rutas de tracking de MLflow
+print(
+    f"--- Debug: Initial CWD: {os.getcwd()} ---"
+)  # Indicar y crear rutas de tracking de MLflow
 
 workspace_dir = os.getcwd()
 mlruns_dir = os.path.join(workspace_dir, "mlruns")
@@ -31,7 +33,7 @@ mlflow.set_tracking_uri(tracking_uri)
 
 dt_srt = datetime.datetime.now().strftime("%Y%m%d-%H%M")
 experiment_name = f"CI-CD-ProyectoFinal-{dt_srt}"
-experiment_id = None 
+experiment_id = None
 try:
     experiment_id = mlflow.create_experiment(
         name=experiment_name,
@@ -45,25 +47,29 @@ except mlflow.exceptions.MlflowException as e:
         print(
             f"--- Debug: Experimento '{experiment_name}' ya existe. Obteniendo ID. ---"
         )
-        experiment = mlflow.get_experiment_by_name(experiment_name) # Obtener el experimento existente para conseguir su ID
+        experiment = mlflow.get_experiment_by_name(
+            experiment_name
+        )  # Obtener el experimento existente para conseguir su ID
         if experiment:
             experiment_id = experiment.experiment_id
             print(f"--- Debug: ID del Experimento Existente: {experiment_id} ---")
             print(
                 f"--- Debug: Ubicación de Artefacto del Experimento Existente: {experiment.artifact_location} ---"
             )
-            if experiment.artifact_location != artifact_location: # Opcional: Verificar si la ubicación del artefacto es la correcta
+            if (
+                experiment.artifact_location != artifact_location
+            ):  # Opcional: Verificar si la ubicación del artefacto es la correcta
                 print(
                     f"--- WARNING: La ubicación del artefacto del experimento existente ('{experiment.artifact_location}') NO coincide con la deseada ('{artifact_location}')! ---"
                 )
-        else: # Esto no debería ocurrir si RESOURCE_ALREADY_EXISTS fue el error
+        else:  # Esto no debería ocurrir si RESOURCE_ALREADY_EXISTS fue el error
             print(
                 f"--- ERROR: No se pudo obtener el experimento existente '{experiment_name}' por nombre. ---"
             )
             sys.exit(1)
     else:
         print(f"--- ERROR creando/obteniendo experimento: {e} ---")
-        raise e 
+        raise e
 
 if experiment_id is None:
     print(
@@ -97,13 +103,9 @@ data = pd.read_csv(data_path)[
 ]
 
 # como son variables categoricas binarias se utiliza LabelEncoder
-data["Gender"] = le_gender.fit_transform(
-    data["Gender"]
-)
+data["Gender"] = le_gender.fit_transform(data["Gender"])
 # Como son variables categoricas no binarias se utiliza OneHotEncoder
-X_geo = ohe.fit_transform(
-    data[["Geography"]]
-)
+X_geo = ohe.fit_transform(data[["Geography"]])
 geo_df = pd.DataFrame(
     X_geo, columns=ohe.get_feature_names_out(["Geography"]), index=data.index
 )
@@ -149,9 +151,7 @@ with open("pkl/model.pkl", "wb") as f:
     pickle.dump(svm, f)
 
 # --- Iniciar Run de MLflow ---
-print(
-    f"--- Debug: Iniciando run de MLflow en Experimento ID: {experiment_id} ---"
-) 
+print(f"--- Debug: Iniciando run de MLflow en Experimento ID: {experiment_id} ---")
 run = None
 try:
     # Iniciar el run PASANDO EXPLÍCITAMENTE el experiment_id
