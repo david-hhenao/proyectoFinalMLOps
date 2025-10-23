@@ -4,9 +4,10 @@ vPY           ?= .venv/bin/python
 pPY           ?= .venv/bin/pip
 _PY		   	  ?= .venv/bin/
 MLRUNS_DIR    ?= mlruns
-export MLFLOW_TRACKING_URI ?= file://$(PWD)/$(MLRUNS_DIR)
+# export MLFLOW_TRACKING_URI ?= file://$(PWD)/$(MLRUNS_DIR)
+export MLFLOW_TRACKING_URI ?= file://$(CURDIR)/$(MLRUNS_DIR)
 
-.PHONY: install format format-check train validate evaluate eval ci cd clean
+.PHONY: install format format-check train test ci cd clean ci_sc
 
 .venv/pyvenv.cfg:
 	$(PY) -m venv .venv
@@ -14,13 +15,11 @@ export MLFLOW_TRACKING_URI ?= file://$(PWD)/$(MLRUNS_DIR)
 clean:
 	rm -rf $(MLRUNS_DIR)
 	rm -rf .venv
-	rm data/validation.csv
+	rm -f data/validation.csv
 	rm -rf pkl
 
 install:
 	$(PY) -m venv .venv
-# 	source .venv/bin/activate
-# 	.venv/bin/pip install --upgrade pip
 	$(pPY) install --upgrade pip
 	$(pPY) install -r requirements.txt
 
@@ -34,14 +33,11 @@ format-check:
 
 train:
 	mkdir -p $(MLRUNS_DIR)
-# 	.venv/bin/python src/train.py
 	$(vPY) src/train.py
 
 
 test:
-# 	.venv/bin/python src/validate.py
 	$(vPY) src/validate.py
-
 
 evaluate: test
 eval: evaluate
