@@ -7,7 +7,7 @@ MLRUNS_DIR    ?= mlruns
 # export MLFLOW_TRACKING_URI ?= file://$(PWD)/$(MLRUNS_DIR)
 export MLFLOW_TRACKING_URI ?= file://$(CURDIR)/$(MLRUNS_DIR)
 
-.PHONY: install format format-check train test ci cd clean ci_sc, show_mlflow
+.PHONY: install format format-check train test ci cd clean ci_sc show_mlflow
 
 .venv/pyvenv.cfg:
 	$(PY) -m venv .venv
@@ -46,7 +46,7 @@ ci: clean install format format-check train test
 ci_sc: install format format-check train test
 
 show_mlflow:
-	mlflow ui --backend-store-uri mlruns --host 0.0.0.0 --port 8080
+	$(_PY)mlflow ui --backend-store-uri mlruns --host 0.0.0.0 --port 8080
 
 cd:
 	@echo "mlflow models serve -m $(MLRUNS_DIR)/<run>/artifacts/model -p 8000 --no-conda"

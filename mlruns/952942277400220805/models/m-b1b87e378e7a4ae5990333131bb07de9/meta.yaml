@@ -1,0 +1,10 @@
+artifact_location: file:///home/sda/Dropbox/Estudio!/Maestria/MLOps/ProyectoFInal/MLOpsProyectoFInal/mlruns/models/m-b1b87e378e7a4ae5990333131bb07de9/artifacts
+creation_timestamp: 1761274158966
+experiment_id: '952942277400220805'
+last_updated_timestamp: 1761274160675
+model_id: m-b1b87e378e7a4ae5990333131bb07de9
+model_type: null
+name: model
+source_run_id: 294461062ccb478697d7788129f22e7c
+status: 2
+status_message: null

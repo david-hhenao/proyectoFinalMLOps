@@ -1,0 +1,14 @@
+artifact_uri: file:///home/sda/Dropbox/Estudio!/Maestria/MLOps/ProyectoFInal/MLOpsProyectoFInal/mlruns/294461062ccb478697d7788129f22e7c/artifacts
+end_time: 1761274160677
+entry_point_name: ''
+experiment_id: '952942277400220805'
+lifecycle_stage: active
+run_id: 294461062ccb478697d7788129f22e7c
+run_name: tasteful-newt-527
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1761274158138
+status: 3
+tags: []
+user_id: sda
