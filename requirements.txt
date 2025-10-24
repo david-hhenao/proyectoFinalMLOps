@@ -1,8 +1,6 @@
-pandas
-scikit-learn
-numpy
-matplotlib
-skops
-mlflow
+pandas==2.3.3
+scikit-learn==1.7.2
+numpy==2.2.6
+mlflow==3.5.1
 black==24.8.0
 isort==5.13.2

@@ -1,18 +1,22 @@
 import datetime
 import os
-import pathlib
+
+# import pathlib
 import pickle
 import sys
 import traceback
-from pathlib import Path
 
 import mlflow
 import mlflow.sklearn
 import pandas as pd
 from mlflow.models import infer_signature
+from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 from sklearn.svm import SVC
+
+# from pathlib import Path
+
 
 print(
     f"--- Debug: Initial CWD: {os.getcwd()} ---"
@@ -22,6 +26,12 @@ workspace_dir = os.getcwd()
 mlruns_dir = os.path.join(workspace_dir, "mlruns")
 tracking_uri = "file://" + os.path.abspath(mlruns_dir)
 artifact_location = "file://" + os.path.abspath(mlruns_dir)
+
+TRAIN_SIZE = 0.7
+TEST_VALID_RATIO = 0.5
+KERNEL = "rbf"
+CLASS_WEIGHT = "balanced"
+RS_VALUE = 42
 
 print(f"--- Debug: Workspace Dir: {workspace_dir} ---")
 print(f"--- Debug: MLRuns Dir: {mlruns_dir} ---")
@@ -84,7 +94,6 @@ ohe = OneHotEncoder(handle_unknown="ignore", sparse_output=False, drop="first")
 scaler = StandardScaler(with_mean=False)
 
 data_path = "data/Churn_Modelling.csv"
-print(os.getcwd())
 
 data = pd.read_csv(data_path)[
     [
@@ -116,10 +125,10 @@ y = data["Exited"]
 del X_geo, geo_df, data
 
 X_train, X_temp, y_train, y_temp = train_test_split(
-    X, y, test_size=0.3, random_state=42, stratify=y
+    X, y, test_size=1 - TRAIN_SIZE, random_state=RS_VALUE, stratify=y
 )
 X_val, X_test, y_val, y_test = train_test_split(
-    X_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp
+    X_temp, y_temp, test_size=TEST_VALID_RATIO, random_state=RS_VALUE, stratify=y_temp
 )
 
 # Se genearan tres dataframes para la validación
@@ -131,10 +140,13 @@ X_val = pd.DataFrame(scaler.transform(X_val), columns=X_train.columns)
 X_val["Exited"] = y_val.values
 X_val.to_csv("data/validation.csv", index=False)
 
-svm = SVC(kernel="rbf", class_weight="balanced")
+svm = SVC(kernel=KERNEL, class_weight=CLASS_WEIGHT, random_state=RS_VALUE)
 svm.fit(X_train, y_train)
 
 accuracy = svm.score(X_test, y_test)
+f1_score = classification_report(y_test, svm.predict(X_test), output_dict=True)[
+    "weighted avg"
+]["f1-score"]
 
 os.makedirs("pkl", exist_ok=True)
 
@@ -147,15 +159,21 @@ with open("pkl/ohe.pkl", "wb") as f:
 with open("pkl/le_gender.pkl", "wb") as f:
     pickle.dump(le_gender, f)
 
-with open("pkl/model.pkl", "wb") as f:
-    pickle.dump(svm, f)
-
 # --- Iniciar Run de MLflow ---
 print(f"--- Debug: Iniciando run de MLflow en Experimento ID: {experiment_id} ---")
 run = None
 try:
     # Iniciar el run PASANDO EXPLÍCITAMENTE el experiment_id
     with mlflow.start_run(experiment_id=experiment_id) as run:
+
+        mlflow.log_param("Random State", RS_VALUE)
+        mlflow.log_param("Train Size", TRAIN_SIZE)
+        mlflow.log_param("Test/Valid Ratio", TEST_VALID_RATIO)
+        mlflow.log_param("Test/valid Size", (1 - TRAIN_SIZE) * TEST_VALID_RATIO)
+        mlflow.log_param("Model", "SVM Classifier")
+        mlflow.log_param("Kernel", KERNEL)
+        mlflow.log_param("Class Weight", CLASS_WEIGHT)
+
         run_id = run.info.run_id
         actual_artifact_uri = run.info.artifact_uri
         print(f"--- Debug: Run ID: {run_id} ---")
@@ -175,6 +193,8 @@ try:
         input_example = X_train.head(3)
 
         mlflow.log_metric("Accuracy", accuracy)
+        mlflow.log_metric("F1 Score", f1_score)
+
         print(f"--- Debug: Intentando log_model con artifact_path='model' ---")
 
         mlflow.sklearn.log_model(
@@ -183,7 +203,10 @@ try:
             signature=signature,
             input_example=input_example,
         )
-        print(f"✅ Modelo registrado correctamente. Accuracy: {accuracy:.4f}")
+        print(
+            f"✅ Modelo registrado correctamente. Accuracy: {accuracy:.4f}, F1 Score: {f1_score:.4f}"
+        )
+
 
 except Exception as e:
     print(f"\n--- ERROR durante la ejecución de MLflow ---")

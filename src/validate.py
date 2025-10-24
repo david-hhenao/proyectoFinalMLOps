@@ -1,25 +1,24 @@
 # src/validate.py
 import os
-import pathlib
 import pickle
 import sys
 from pathlib import Path
 
-import joblib
 import pandas as pd
-from sklearn.datasets import load_diabetes  # Importar load_diabetes
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
 
 # Parámetro de umbral
-THRESHOLD = 0.7
+THRESHOLD_ACC = 0.75
+THRESHOLD_F1 = 0.7
+MODEL_PATH_1 = "mlruns/models/"
+MODEL_PATH_2 = "/artifacts/model.pkl"
+
+model_path = MODEL_PATH_1 + os.listdir(MODEL_PATH_1)[0] + MODEL_PATH_2
 
 print("--- Debug: Cargando dataset de validación ---")
 
 
 # Generación de x y y
-# data = pd.read_csv(os.path.join(Path.cwd().parent.as_posix(), "data", "validation.csv"))
-# data = "../data/validation.csv"
 data = pd.read_csv("data/validation.csv")
 X_valid = data.drop(columns="Exited")
 y_valid = data[["Exited"]]
@@ -28,12 +27,13 @@ print(f"--- Debug: Dimensiones de X_valid: {X_valid.shape} ---")
 
 # --- Cargar modelo previamente entrenado ---
 # model_path = os.path.join(Path.cwd().parent.as_posix(), "pkl", "model.pkl")
-model_path = "pkl/model.pkl"
+# model_path = "pkl/model.pkl"
 print(f"--- Debug: Intentando cargar modelo desde: {model_path} ---")
 
 try:
     with open(model_path, "rb") as f:
         model = pickle.load(f)
+
 except FileNotFoundError:
     print(
         f"--- ERROR: No se encontró el archivo del modelo en '{model_path}'. Asegúrate de que el paso 'make train' lo haya guardado correctamente en la raíz del proyecto. ---"
@@ -59,12 +59,26 @@ except ValueError as pred_err:
     sys.exit(1)
 
 accuracy = model.score(X_valid, y_valid)
-print(f"🔍 Accuracy del modelo: {accuracy:.4f} (umbral: {THRESHOLD})")
+f1_score = classification_report(y_valid, model.predict(X_valid), output_dict=True)[
+    "weighted avg"
+]["f1-score"]
+print(f"🔍 Accuracy del modelo: {accuracy:.4f} (umbral: {THRESHOLD_ACC})")
+print(f"🔍 F1 Score del modelo: {f1_score:.4f} (umbral: {THRESHOLD_F1})")
 
 # Validación
-if accuracy >= THRESHOLD:
-    print("✅ El modelo cumple los criterios de calidad.")
+if accuracy >= THRESHOLD_ACC:
+    print("✅ El modelo cumple los criterios de calidad para la métrica de Accuracy.")  # éxito
+else:
+    print(
+        "❌ El modelo no cumple el umbral para la métrica de Accuracy. Deteniendo pipeline."
+    )
+    sys.exit(1)  # error
+
+if accuracy >= THRESHOLD_F1:
+    print("✅ El modelo cumple los criterios de calidad para la métrica de F1 Score.")
     sys.exit(0)  # éxito
 else:
-    print("❌ El modelo no cumple el umbral. Deteniendo pipeline.")
+    print(
+        "❌ El modelo no cumple el umbral para la métrica de F1 Score. Deteniendo pipeline."
+    )
     sys.exit(1)  # error
