@@ -67,7 +67,9 @@ print(f"🔍 F1 Score del modelo: {f1_score:.4f} (umbral: {THRESHOLD_F1})")
 
 # Validación
 if accuracy >= THRESHOLD_ACC:
-    print("✅ El modelo cumple los criterios de calidad para la métrica de Accuracy.")  # éxito
+    print(
+        "✅ El modelo cumple los criterios de calidad para la métrica de Accuracy."
+    )  # éxito
 else:
     print(
         "❌ El modelo no cumple el umbral para la métrica de Accuracy. Deteniendo pipeline."
